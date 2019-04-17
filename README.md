@@ -1,3 +1,3 @@
-# yii2-crud
+# yii2-reporting
 
-Actions implementing basic CRUD functionality for quick re-use
+Traits that can be applied to Yii classes to keep a report of the progress of a task
