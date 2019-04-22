@@ -167,9 +167,12 @@ trait BaseReportableTrait
      * Set the flag that we are currently grouping entries
      * @return void 
      */
-    public function endReportGroup(){
+    public function endReportGroup($groupType){
         $this->grouping_entries = false;
-        $this->report_entries[] = $this->current_report_group;
+        $this->report_entries[] = [
+            'groupType' => $groupType,
+            'entries' => $this->current_report_group
+        ];
         $this->current_report_group = [];
     }
 
