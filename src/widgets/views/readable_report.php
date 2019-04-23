@@ -22,7 +22,7 @@
 			<li class="report-group report-item-<?= $report_entry['groupType']; ?>"><ul>
 				<?php foreach($report_entry['entries'] as $report_subentry): ?>
 				<li class="report-item report-item-<?= $report_subentry->type; ?>">
-						<?= $report_subentry->message; ?>
+					<?= $report_subentry->message; ?>
 				</li>
 				<?php endforeach; ?>
 			</ul></li>
