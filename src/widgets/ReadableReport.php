@@ -1,4 +1,5 @@
 <?php
+
 namespace bvb\reporting\widgets;
 
 use Yii;
@@ -13,9 +14,9 @@ class ReadableReport extends Widget
 {
     /**
      * The class that implements the WebReportableTrait
-     * @var mixed
+     * @var bvb\reporting\models\Report
      */
-    public $reportableClass;
+    public $report;
 
     /**
      * {@inheritdoc}
@@ -23,8 +24,8 @@ class ReadableReport extends Widget
     public function run()
     {
         $this->registerInlineCss();
-        return $this->render('readable_report', [
-            'reportableClass' => $this->reportableClass
+        return $this->render('readable-report', [
+            'report' => $this->report
         ]);
     }
 
