@@ -7,6 +7,7 @@ use bvb\reporting\helpers\ReportHelper;
 use Yii;
 use yii\base\Component;
 use yii\console\Controller;
+use yii\helpers\Console;
 
 /**
  * ConsoleReporting will output commands to the console in and also has the
@@ -20,14 +21,14 @@ class ConsoleReporting extends BaseReporting
     public function init()
     {
         parent::init();
-        Yii::$app->on(Controller::EVENT_AFTER_ACTION, [$this, 'afterReportAction']);
+        Yii::$app->on(Controller::EVENT_AFTER_ACTION, [$this, 'afterAction']);
     }
 
     /**
      * After the action has run display brief results and summary entries
      * and send the report e-mail to the recipients
      */
-    public function afterReportAction()
+    public function afterAction()
     {
         if( $this->getReport()->hasEntries() ){
             // --- Provide the counts of entry levels
@@ -59,18 +60,56 @@ class ConsoleReporting extends BaseReporting
         }
     }
 
+
+    /**
+     * Runs the same function on the report but also adds a space before in the
+     * console output
+     * @return void
+     */
+    public function startGroup()
+    {
+        parent::startGroup();
+        $this->output("\n");
+    }
+
+    /**
+     * Runs the same function on the report but also adds a space after in the
+     * console output
+     * @return void
+     */
+    public function endGroup()
+    {
+        parent::endGroup();
+        $this->output("\n");
+    }
+
     /**
      * Outputs the message to the termianl
      * @return void
      */
     public function output($message, $options = []){
-        if(count($this->getReport()->getGroupIdStack()) > 0){
+        if(count($this->getReport()->getGroupIdStack()) > 1){
             // --- If we are more than one deep in a grouping we will display that using tabs on the screen
-            $message = str_repeat("\t", (count($this->getReport()->getGroupIdStack())));
+            $message = str_repeat("\t", (count($this->getReport()->getGroupIdStack()))).$message;
         }
         $arguments = $options;
         array_unshift($arguments, $message);
         call_user_func_array([Yii::$app->controller, 'stdout'], $arguments);
+    }
+
+    /**
+     * Adds output to console screen and runs on parent which calls through
+     * to the Report object
+     * @param string $message
+     * @param string $category
+     * @param boolean $addNewLine
+     * @param array $outputOptions
+     * @return void
+     */
+    public function addSummary($message, $category = '', $addNewLine = true, $outputOptions = [])
+    {
+        $this->output($message.($addNewLine ? "\n" : ''), $outputOptions);
+        parent::addSummary($message, $category);
     }
 
     /**
