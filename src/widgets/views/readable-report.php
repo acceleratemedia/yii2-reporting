@@ -32,21 +32,31 @@ use bvb\reporting\helpers\ReportHelper;
 	All entries for <?= $report->getTitle(); ?>:
 	<div class="report-details">
 		<ul class="report-entries-root-list">
-		<?php foreach($report->getEntries() as $entry): ?>
-			<?php if(is_array($entry)): ?>
-			<li class="report-group report-item-<?= $entry['groupType']; ?>"><ul>
-				<?php foreach($entry['entries'] as $childEntry): ?>
-				<li class="report-item report-item-<?= $childEntry->level; ?>">
-					<?= $childEntry->message; ?>
-				</li>
-				<?php endforeach; ?>
-			</ul></li>
-			<?php else: ?>
-			<li class="report-item report-item-<?= $entry->level; ?>">
+		<?php
+		$groupIdStack = [];
+		$previousGroupId = null;
+		foreach($report->getEntries() as $entry):
+			// print_r($entry);
+			$startNewGroup = $endLastGroup = false;
+			if($entry->groupId != $previousGroupId){
+				if(!in_array($entry->groupId, $groupIdStack)){
+					$groupIdStack[] = $entry->groupId;
+					$startNewGroup = true;
+				} else {
+					array_pop($groupIdStack);
+					$endLastGroup = true;
+				}
+			}
+		?>
+			<?= ($startNewGroup) ? '<ul class="group">' : ''; ?>
+			<li class="report-entry report-entry-<?= $entry->level; ?>">
 				<?= $entry->message; ?>
 			</li>
-			<?php endif; ?>
-		<?php endforeach; ?>
+			<?= ($endLastGroup) ? '</ul>' : ''; ?>
+		<?php 
+			$previousGroupId = $entry->groupId;
+		endforeach;
+		?>
 		</ul>
 	</div>
 	<?php endif; ?>
