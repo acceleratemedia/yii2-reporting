@@ -30,20 +30,6 @@ class Report extends BaseObject
     private $_entries = [];
 
     /**
-     * All of the summary entries for the report. A summary entry usually
-     * provides an overview of the results of what is being reported
-     * @var array
-     */
-    // private $_summaryEntries = [];
-
-    /**
-     * Whether or not the reporting mechanism is in the middle of a grouped
-     * set of entries. Is used to know whether to 
-     * @var array
-     */
-    private $_isCurrentlyGrouping = false;
-
-    /**
      * Array where the key is a string to identify the entry level and the value
      * is the number of entries that have been added for that level. This is useful
      * in an overview of how the report went.
@@ -237,7 +223,8 @@ class Report extends BaseObject
      * @return $this
      */
     public function startGroup(){
-        $this->_groupIdStack[] = $this->_groupIdCounter++;
+        $this->_groupIdCounter++;
+        $this->_groupIdStack[] = $this->_groupIdCounter;
         return $this;
     }
 
@@ -266,15 +253,6 @@ class Report extends BaseObject
     public function endGroup(){
         array_pop($this->_groupIdStack);
     }
-
-    /**
-     * Whether or not there is something to report
-     * @return boolean
-     */
-    // public function hasContent()
-    // {
-    //     return $this->hasEntries() || $this->hasSummaryEntries();
-    // }
 
     /**
      * Whether or not the member varaible report_entries has values
