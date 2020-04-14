@@ -67,26 +67,77 @@ class BaseReporting extends Component
     }
 
     /**
-     * Initializes the reporting component by registering [[saveAsFile()]] as a
-     * shutdown function.
+     * Sets basepath and set expcetion handler, error handler, and
+     * shutdown function
      * {@inheritdoc}
      */
     public function init()
     {
         parent::init();
         $this->basePath = Yii::getAlias($this->basePath);
-        register_shutdown_function(function () {
-            $this->saveAsFile();
-            if(
-                !empty($this->recipients) &&
-                (
-                    !$this->sendEmailOnlyOnError ||
-                    $this->getReport()->getNumEntriesByLevel(EntryHelper::LEVEL_ERROR) > 0
-                )
-            ){
-                ReportHelper::email($this->getReport(), $this->recipients);
-            }
-        });
+        set_exception_handler([$this, 'handleException']);
+        set_error_handler([$this, 'handleError']);
+        register_shutdown_function([$this, 'shutdownFunction']);
+    }
+
+    /**
+     * Add an error entry for the exception and run yii's exception handler
+     * @param \Exception $exception the exception that is not caught
+     * @return void
+     */
+    public function handleException($exception)
+    {
+        $this->endReportWithError($exception->getMessage());
+        return Yii::$app->getErrorHandler()->handleException($exception);
+    }
+
+
+    /**
+     * Add an error entry for the exception or fatal error message
+     * @param int $code the level of the error raised.
+     * @param string $message the error message.
+     * @param string $file the filename that the error was raised in.
+     * @param int $line the line number the error was raised at.
+     * @return bool whether the normal error handler continues.
+     *
+     * @throws ErrorException
+     */
+    public function handleError($code, $message, $file, $line)
+    {
+        $this->endReportWithError($message);
+        return Yii::$app->getErrorHandler()->handleError($code, $message, $file, $line);
+    }
+
+    /**
+     * Close any open groups in report and add error message
+     * @param string $message
+     * @return void
+     */
+    protected function endReportWithError($message)
+    {
+        foreach($this->getReport()->getGroupIdStack() as $group){
+            $this->getReport()->endGroup();
+        }
+        $this->getReport()->addError($message);
+    }
+
+    /**
+     * Save the file and send the email if [[recipients]] has values and
+     * there's an error or it is configued to always email
+     * @return void
+     */
+    public function shutdownFunction()
+    {
+        $this->saveAsFile();
+        if(
+            !empty($this->recipients) &&
+            (
+                !$this->sendEmailOnlyOnError ||
+                $this->getReport()->getNumEntriesByLevel(EntryHelper::LEVEL_ERROR) > 0
+            )
+        ){
+            ReportHelper::email($this->getReport(), $this->recipients);
+        }
     }
 
     /**
@@ -110,8 +161,7 @@ class BaseReporting extends Component
 
     /**
      * Writes the report to a file as a json object
-     * @throws InvalidConfigException if unable to open the log file for writing
-     * @throws LogRuntimeException if unable to write complete log to file
+     * @return void
      */
     public function saveAsFile()
     {
