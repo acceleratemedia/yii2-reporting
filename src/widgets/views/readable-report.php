@@ -27,7 +27,10 @@ use bvb\reporting\helpers\ReportHelper;
 		</ul>
 	<?php endif; ?>
 	</div>
-	<?php if($report->hasEntries()): ?>
+	<?php 
+	if($report->hasEntries()): 
+		$groups = $report->getGroups();
+	?>
 	<hr>
 	All entries for <?= $report->getTitle(); ?>:
 	<div class="report-details">
@@ -36,23 +39,19 @@ use bvb\reporting\helpers\ReportHelper;
 		$groupIdStack = [];
 		$previousGroupId = null;
 		foreach($report->getEntries() as $entry):
-			// print_r($entry);
 			$startNewGroup = $endLastGroup = false;
 			if($entry->groupId != $previousGroupId){
-				if(!in_array($entry->groupId, $groupIdStack)){
-					$groupIdStack[] = $entry->groupId;
-					$startNewGroup = true;
-				} else {
-					array_pop($groupIdStack);
+				$startNewGroup = true;
+				if($groups[$entry->groupId]->parentId != $previousGroupId){
 					$endLastGroup = true;
 				}
 			}
 		?>
+			<?= ($endLastGroup) ? '</ul>' : ''; ?>
 			<?= ($startNewGroup) ? '<ul class="group">' : ''; ?>
 			<li class="report-entry report-entry-<?= $entry->level; ?>">
 				<?= $entry->message; ?>
 			</li>
-			<?= ($endLastGroup) ? '</ul>' : ''; ?>
 		<?php 
 			$previousGroupId = $entry->groupId;
 		endforeach;

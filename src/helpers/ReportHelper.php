@@ -23,9 +23,15 @@ class ReportHelper
 			'title' => $report->title,
 			'entryLevels' => $report->getEntryLevels(),
 			'entries' => [],
-			// 'summaryEntries' => $report->getSummaryEntries(),
+			'groups' => [],
 			'timestamp' => $report->getTimestamp()
 		];
+		foreach($report->getGroups() as $group){
+			$reportData['groups'][] = [
+				'id' => $group->id,
+				'parentId' => $group->parentId
+			];
+		}
 		foreach($report->getEntries() as $entry){
 			$reportData['entries'][] = [
                 'level' => $entry->level,

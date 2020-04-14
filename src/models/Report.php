@@ -30,6 +30,12 @@ class Report extends BaseObject
     private $_entries = [];
 
     /**
+     * All groups for a report
+     * @var array
+     */
+    private $_groups = [];
+
+    /**
      * Array where the key is a string to identify the entry level and the value
      * is the number of entries that have been added for that level. This is useful
      * in an overview of how the report went.
@@ -219,12 +225,20 @@ class Report extends BaseObject
     }
 
     /**
-     * Set the flag that we are currently grouping entries
+     * Increase group id counter, add id to stack, and add group object
      * @return $this
      */
     public function startGroup(){
+        $groupBeforeStartingNew = $this->getActiveGroupId();
+
         $this->_groupIdCounter++;
         $this->_groupIdStack[] = $this->_groupIdCounter;
+
+        $this->_groups[$this->getActiveGroupId()] = new Group([
+            'id' => $this->getActiveGroupId(),
+            'parentId' => $groupBeforeStartingNew
+        ]);
+
         return $this;
     }
 
@@ -243,7 +257,7 @@ class Report extends BaseObject
      */
     public function getActiveGroupId()
     {
-        return $this->_groupIdStack[count($this->_groupIdStack)-1];
+        return (count($this->_groupIdStack) == 0) ? null : $this->_groupIdStack[count($this->_groupIdStack)-1];
     }
 
     /**
@@ -252,6 +266,15 @@ class Report extends BaseObject
      */
     public function endGroup(){
         array_pop($this->_groupIdStack);
+    }
+
+    /**
+     * Getter for [[_groups]]
+     * @return array
+     */ 
+    public function getGroups()
+    {
+        return $this->_groups;
     }
 
     /**
@@ -319,6 +342,12 @@ class Report extends BaseObject
         $this->title = $reportData['title'];
         $this->_timestamp = $reportData['timestamp'];
         $this->_entryLevels = $reportData['entryLevels'];
+        foreach($reportData['groups'] as $groupData){
+            $this->_groups[$groupData['id']] = new Group([
+                'id' => $groupData['id'],
+                'parentId' => $groupData['parentId']
+            ]);
+        }
         foreach($reportData['entries'] as $entryData){
             $this->_entries[] = new Entry([
                 'level' => $entryData['level'],
