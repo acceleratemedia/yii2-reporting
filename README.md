@@ -24,3 +24,17 @@ And, add the the following application parameter:
 		'fromEmail' => 'from@from.com'
 	]
 ```
+
+To create a report:
+```
+Yii::$app->reporting->startReport(['title' => 'Report Title']);
+Yii::$app->reporting->addInfo('Information entry');
+Yii::$app->reporting->addSummary('Summary entry');
+foreach(){
+    Yii::$app->reporting->startGroup();
+    Yii::$app->reporting->addInfo('Information to');
+    Yii::$app->reporting->addInfo('group together');
+    Yii::$app->reporting->endGroup();
+}
+Yii::$app->reporting->addSummary('Final Summary entry');
+```
