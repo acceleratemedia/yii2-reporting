@@ -94,11 +94,11 @@ class ReportHelper
 	/**
 	 * Sends the report contents in an email
 	 * @param \bvb\reporting\models\Report $report
+	 * @param boolean $emailFullReport
 	 * @param array $recipients
-
 	 * @return boolean
 	 */
-	static function email($report, $recipients)
+	static function email($report, $emailFullReport, $recipients)
 	{
 		$mailerDefaultHtmlLayout = Yii::$app->mailer->htmlLayout;
         Yii::$app->mailer->htmlLayout = '@bvb-reporting/mail/layouts/html';
@@ -109,7 +109,8 @@ class ReportHelper
         }
 
         $return = Yii::$app->mailer->compose('@bvb-reporting/views/view/index', [
-                'report' => $report
+                'report' => $report,
+                'showFullReport' => $emailFullReport
             ])
             ->setFrom(Yii::$app->params['fromEmail'])
             ->setTo($recipients)

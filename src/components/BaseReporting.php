@@ -40,7 +40,13 @@ class BaseReporting extends Component
      * report
      * @var boolean
      */
-    public $sendEmailOnlyOnError = false;
+    public $sendEmailOnlyOnError = true;
+
+    /**
+     * Controls whether the full report will be sent or only the summary
+     * @var boolean
+     */
+    public $emailFullReport = false;
 
     /**
      * Reports that are currently being generated
@@ -136,7 +142,7 @@ class BaseReporting extends Component
                 $this->getReport()->getNumEntriesByLevel(EntryHelper::LEVEL_ERROR) > 0
             )
         ){
-            ReportHelper::email($this->getReport(), $this->recipients);
+            ReportHelper::email($this->getReport(), $this->emailFullReport, $this->recipients);
         }
     }
 

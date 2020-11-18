@@ -2,6 +2,7 @@
 
 /* @var $this yii\web\View */
 /* @var $report bvb\reporting\models\Report */
+/* @var $showFullReport boolean */
 
 use bvb\reporting\helpers\EntryHelper;
 use bvb\reporting\helpers\ReportHelper;
@@ -28,7 +29,7 @@ use bvb\reporting\helpers\ReportHelper;
 	<?php endif; ?>
 	</div>
 	<?php 
-	if($report->hasEntries()): 
+	if($showFullReport && $report->hasEntries()): 
 		$groups = $report->getGroups();
 	?>
 	<hr>
