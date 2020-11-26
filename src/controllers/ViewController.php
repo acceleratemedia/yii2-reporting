@@ -14,17 +14,20 @@ use yii\web\NotFoundHttpException;
 class ViewController extends Controller
 {
     /**
-     * Render a view listing out available reports to be viewed
+     * Render a view listing details of the report
+     * @param string $path 
+     * @param boolean $showFullReport
      * @return mixed
      */
-    public function actionIndex($path)
+    public function actionIndex($path, $showFullReport = true)
     {
         if(!file_exists($path)){            
             throw new NotFoundHttpException($e->getMessage());
         }
 
         return $this->render('index', [
-            'report' => ReportHelper::loadFromPath($path)
+            'report' => ReportHelper::loadFromPath($path),
+            'showFullReport' => $showFullReport
         ]);
     }
 }
