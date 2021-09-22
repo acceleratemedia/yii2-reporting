@@ -43,7 +43,7 @@ use bvb\reporting\helpers\ReportHelper;
 			$startNewGroup = $endLastGroup = false;
 			if($entry->groupId != $previousGroupId){
 				$startNewGroup = true;
-				if($groups[$entry->groupId]->parentId != $previousGroupId){
+				if(isset($groups[$entry->groupId]) && $groups[$entry->groupId]->parentId != $previousGroupId){
 					$endLastGroup = true;
 				}
 			}

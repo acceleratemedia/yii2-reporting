@@ -101,14 +101,14 @@ class ReportHelper
 	static function email($report, $emailFullReport, $recipients)
 	{
 		$mailerDefaultHtmlLayout = Yii::$app->mailer->htmlLayout;
-        Yii::$app->mailer->htmlLayout = '@bvb-reporting/mail/layouts/html';
+        Yii::$app->mailer->htmlLayout = '@bvb/reporting/mail/layouts/html';
 
         $subject = Yii::$app->name.': '.$report->title;
         if($report->getNumEntriesByLevel(EntryHelper::LEVEL_ERROR) > 0){
         	$subject .= ' (ERROR)';
         }
 
-        $return = Yii::$app->mailer->compose('@bvb-reporting/views/view/index', [
+        $return = Yii::$app->mailer->compose('@bvb/reporting/views/view/index', [
                 'report' => $report,
                 'showFullReport' => $emailFullReport
             ])
