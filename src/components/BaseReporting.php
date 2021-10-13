@@ -121,10 +121,12 @@ class BaseReporting extends Component
      */
     protected function endReportWithError($message)
     {
-        foreach($this->getReport()->getGroupIdStack() as $group){
-            $this->getReport()->endGroup();
+        if($this->getReport()){
+            foreach($this->getReport()->getGroupIdStack() as $group){
+                $this->getReport()->endGroup();
+            }
+            $this->getReport()->addError($message);
         }
-        $this->getReport()->addError($message);
     }
 
     /**
@@ -134,15 +136,17 @@ class BaseReporting extends Component
      */
     public function shutdownFunction()
     {
-        $this->saveAsFile();
-        if(
-            !empty($this->recipients) &&
-            (
-                !$this->sendEmailOnlyOnError ||
-                $this->getReport()->getNumEntriesByLevel(EntryHelper::LEVEL_ERROR) > 0
-            )
-        ){
-            ReportHelper::email($this->getReport(), $this->emailFullReport, $this->recipients);
+        if($this->getReport()){
+            $this->saveAsFile();
+            if(
+                !empty($this->recipients) &&
+                (
+                    !$this->sendEmailOnlyOnError ||
+                    $this->getReport()->getNumEntriesByLevel(EntryHelper::LEVEL_ERROR) > 0
+                )
+            ){
+                ReportHelper::email($this->getReport(), $this->emailFullReport, $this->recipients);
+            }
         }
     }
 
@@ -151,7 +155,7 @@ class BaseReporting extends Component
      * @param array $reportConfig Configuration array for creating a new Report object
      * @return void
      */
-    public function startReport($reportConfig)
+    public function startReport($reportConfig = [])
     {
         $this->_report = new Report($reportConfig);
     }
@@ -162,6 +166,9 @@ class BaseReporting extends Component
      */
     public function getReport()
     {
+        if(empty($this->_report)){
+            $this->startReport(['title' => 'Anonymous Report']);
+        }
         return $this->_report;
     }
 

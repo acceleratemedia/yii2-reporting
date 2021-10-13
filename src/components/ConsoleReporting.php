@@ -30,7 +30,7 @@ class ConsoleReporting extends BaseReporting
      */
     public function afterAction()
     {
-        if( $this->getReport()->hasEntries() ){
+        if( $this->getReport() && $this->getReport()->hasEntries() ){
             // --- Provide the counts of entry levels
             Yii::$app->controller->stdout("\n".'Task ran to completion: '."\n");
             $entryLevelData = $this->getReport()->getEntryLevels();
@@ -52,7 +52,7 @@ class ConsoleReporting extends BaseReporting
     /**
      * {@inheritdoc}
      */
-    public function startReport($reportConfig)
+    public function startReport($reportConfig = [])
     {
         parent::startReport($reportConfig);
         if(isset($reportConfig['title'])){
