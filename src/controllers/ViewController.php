@@ -3,16 +3,18 @@
 namespace bvb\reporting\controllers;
 
 use bvb\reporting\helpers\ReportHelper;
-use Yii;
-use yii\base\ErrorException;
-use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
 /**
  * ViewController provides an index action for viewing an individual report
  */
-class ViewController extends Controller
+class ViewController extends \yii\web\Controller
 {
+    /**
+     * Only allow site admins to enter
+     */
+    use \bvb\user\backend\controllers\traits\AdminAccess;
+
     /**
      * Render a view listing details of the report
      * @param string $path 

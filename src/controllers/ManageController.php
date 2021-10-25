@@ -3,15 +3,17 @@
 namespace bvb\reporting\controllers;
 
 use bvb\reporting\helpers\ReportHelper;
-use Yii;
-use yii\web\Controller;
-use yii\base\Component;
 
 /**
  * ManageController provides an index action for viewing lists of reports
  */
-class ManageController extends Controller
+class ManageController extends \yii\web\Controller
 {
+    /**
+     * Only allow site admins to enter
+     */
+    use \bvb\user\backend\controllers\traits\AdminAccess;
+
     /**
      * Render a view listing out available reports to be viewed
      * @return mixed

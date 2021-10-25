@@ -4,13 +4,17 @@ namespace bvb\reporting\controllers;
 
 use Yii;
 use yii\web\NotFoundHttpException;
-use yii\web\Controller;
 
 /**
  * DeleteController provides an index action for deleting a report file
  */
-class DeleteController extends Controller
+class DeleteController extends \yii\web\Controller
 {
+    /**
+     * Only allow site admins to enter
+     */
+    use \bvb\user\backend\controllers\traits\AdminAccess;
+
     /**
      * Deletes report file located at $path
      * @param string $path
