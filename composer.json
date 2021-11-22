@@ -1,5 +1,5 @@
 {
-    "name": "brianvb/yii2-reporting",
+    "name": "acceleratemedia/yii2-reporting",
     "description": "Adds reporting functionality as traits to classes",
     "type": "yii2-extension",
     "require": {
