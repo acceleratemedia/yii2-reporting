@@ -41,11 +41,21 @@ use bvb\reporting\helpers\ReportHelper;
 		$previousGroupId = null;
 		foreach($report->getEntries() as $entry):
 			$startNewGroup = $endLastGroup = false;
-			if($entry->groupId != $previousGroupId){
+			if(
+				!empty($entry->groupId) &&
+				$entry->groupId != $previousGroupId
+			){
 				$startNewGroup = true;
-				if(isset($groups[$entry->groupId]) && $groups[$entry->groupId]->parentId != $previousGroupId){
-					$endLastGroup = true;
-				}
+			}
+
+			if(
+				empty($entry->groupId) && !empty($previousGroupId) ||
+				(
+					$entry->groupId != $previousGroupId &&
+					isset($groups[$entry->groupId]) && $groups[$entry->groupId]->parentId != $previousGroupId
+				)
+			){
+				$endLastGroup = true;
 			}
 		?>
 			<?= ($endLastGroup) ? '</ul>' : ''; ?>
