@@ -93,7 +93,7 @@ class BaseReporting extends Component
      */
     public function handleException($exception)
     {
-        $this->endReportWithError($exception->getMessage());
+        $this->endReportWithMessage($exception->getMessage());
         return Yii::$app->getErrorHandler()->handleException($exception);
     }
 
@@ -110,22 +110,29 @@ class BaseReporting extends Component
      */
     public function handleError($code, $message, $file, $line)
     {
-        $this->endReportWithError($message);
+        $message = $message ."\n".$file.'::'.$line;
+        $this->endReportWithMessage($message, in_array($code, [E_WARNING, E_NOTICE]));
         return Yii::$app->getErrorHandler()->handleError($code, $message, $file, $line);
     }
 
     /**
      * Close any open groups in report and add error message
      * @param string $message
+     * @param boolean $warning If true will use addWarning() if false will use
+     * addError()
      * @return void
      */
-    protected function endReportWithError($message)
+    protected function endReportWithMessage($message, $warning = true)
     {
         if($this->getReport()){
             foreach($this->getReport()->getGroupIdStack() as $group){
                 $this->getReport()->endGroup();
             }
-            $this->getReport()->addError($message);
+            if($warning){
+                $this->getReport()->addWarning($message);
+            } else {
+                $this->getReport()->addError($message);
+            }
         }
     }
 
