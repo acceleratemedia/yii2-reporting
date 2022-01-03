@@ -93,8 +93,9 @@ class BaseReporting extends Component
      */
     public function handleException($exception)
     {
+        $this->doExtraLogging($exception);
         $this->endReportWithMessage($exception->getMessage());
-        return Yii::$app->getErrorHandler()->handleException($exception);
+        return Yii::$app->getErrorHandler()->handleException($exception, false);
     }
 
 
@@ -110,9 +111,50 @@ class BaseReporting extends Component
      */
     public function handleError($code, $message, $file, $line)
     {
+        $this->doExtraLogging($code, $message, $file, $line);
         $message = $message ."\n".$file.'::'.$line;
         $this->endReportWithMessage($message, in_array($code, [E_WARNING, E_NOTICE]));
         return Yii::$app->getErrorHandler()->handleError($code, $message, $file, $line);
+    }
+
+    /**
+     * Do some extra logging which will be helpful for debugging in reports
+     * @param \Exception|int $exceptionOrCode the exception if this is called 
+     * from handleException*() or the code if this is called from handleError()
+     * @param string $message the error message.
+     * @param string $file the filename that the error was raised in.
+     * @param int $line the line number the error was raised at.
+     */
+    protected function doExtraLogging($exceptionOrCode, $message = null, $file = null, $line = null)
+    {
+        if(!isset(Yii::$app->log->targets['errorsDuringReporting'])){
+            // --- Create a special log target to handle errors during reporting since
+            // --- we'll usually want to inspect them to make sure reports are clean but
+            // --- with notices and warnings they won't get logged in most environments
+            Yii::$app->log->targets['errorsDuringReporting'] = Yii::createObject([
+                'class' => \yii\log\FileTarget::class,
+                'categories' => ['errorsDuringReporting'],
+                'logFile' => '@runtime/reports/errors-during-reporting.log'
+            ]);
+        }
+
+        // --- Increase trace level to help us but keep it in var to restore
+        $defaultTraceLevel = Yii::$app->log->traceLevel;
+        Yii::$app->log->traceLevel = 9;
+
+        // --- Get the level and message based on if its an exception or an code
+        if(is_int($exceptionOrCode)){
+            $level = (in_array($exceptionOrCode, [E_WARNING, E_USER_WARNING, E_NOTICE, E_USER_NOTICE])) ?
+                \yii\log\Logger::LEVEL_WARNING :
+                \yii\log\Logger::LEVEL_ERROR;
+        } else {
+            $message = $exceptionOrCode->getMessage();
+            $level = \yii\log\Logger::LEVEL_ERROR;
+        }
+
+        // --- Log and restore trace level
+        Yii::$app->log->getLogger()->log($message, $level, 'errorsDuringReporting');
+        Yii::$app->log->traceLevel = $defaultTraceLevel;
     }
 
     /**
