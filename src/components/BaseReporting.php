@@ -4,6 +4,7 @@ namespace bvb\reporting\components;
 
 use bvb\reporting\helpers\EntryHelper;
 use bvb\reporting\helpers\ReportHelper;
+use bvb\reporting\jobs\SendReportEmail;
 use bvb\reporting\models\Report;
 use Yii;
 use yii\base\Component;
@@ -47,6 +48,21 @@ class BaseReporting extends Component
      * @var boolean
      */
     public $emailFullReport = false;
+
+    /**
+     * @var string Constnant to send report email using jobs and the queue
+     */
+    const EMAIL_VIA_QUEUE = 'emailViaQueue';
+
+    /**
+     * @var string Constnant to send report email on application shutdown
+     */
+    const EMAIL_ON_SHUTDOWN = 'emailOnShutdown';
+
+    /**
+     * @var string Method for sending report emails
+     */
+    public $emailMethod = self::EMAIL_VIA_QUEUE;
 
     /**
      * Reports that are currently being generated
@@ -179,8 +195,10 @@ class BaseReporting extends Component
     }
 
     /**
-     * Save the file and send the email if [[recipients]] has values and
-     * there's an error or it is configued to always email
+     * Save the file and determine whether to send an email base on if [[recipients]]
+     * has values and if there's an error or it is configued to always email. Then
+     * use [[emailMethod]] to determine whether to send the email or schedule a job
+     * to do it using the queue component (queue component must be configured separately)
      * @return void
      */
     public function shutdownFunction()
@@ -194,7 +212,21 @@ class BaseReporting extends Component
                     $this->getReport()->getNumEntriesByLevel(EntryHelper::LEVEL_ERROR) > 0
                 )
             ){
-                ReportHelper::email($this->getReport(), $this->emailFullReport, $this->recipients);
+                if(
+                    $this->emailMethod == self::EMAIL_ON_SHUTDOWN ||
+                    !Yii::$app->has('queue')
+                ){
+                    if(!Yii::$app->has('queue')){
+                        $this->getReport()->addError('Report set to email on queue but no queue component is configured');
+                    }
+                    ReportHelper::email($this->getReport(), $this->emailFullReport, $this->recipients);
+                } else {
+                    Yii::$app->queue->delay(60)->push(new SendReportEmail([
+                        'path' => $this->getPath(),
+                        'emailFullReport' => $this->emailFullReport,
+                        'recipients' => $this->recipients
+                    ]));     
+                }
             }
         }
     }
@@ -227,10 +259,20 @@ class BaseReporting extends Component
      */
     public function saveAsFile()
     {
-        $relativePath = Inflector::slug($this->getReport()->getTitle()).'/'.date('Y-m-d H:i:s').'.json';
-        $filePath = $this->basePath.'/'.$relativePath;
-        FileHelper::createDirectory(dirname($filePath), 0777, true);        
+        FileHelper::createDirectory(dirname($this->getPath()), 0777, true);        
         $json = ReportHelper::toJson($this->getReport());
-        file_put_contents($filePath, $json);
+        file_put_contents($this->getPath(), $json);
+    }
+
+    /**
+     * @return string The path to the file
+     */
+    private $_filePath;
+    public function getPath()
+    {
+        if(empty($this->_filePath)){
+            $this->_filePath = $this->basePath.'/'.Inflector::slug($this->getReport()->getTitle()).'/'.date('Y-m-d H:i:s').'.json';
+        }
+        return $this->_filePath;
     }
 }
