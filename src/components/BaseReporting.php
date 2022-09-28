@@ -183,12 +183,12 @@ class BaseReporting extends Component
     protected function endReportWithMessage($message, $warning = true)
     {
         if($this->getReport()){
-            foreach($this->getReport()->getGroupIdStack() as $group){
-                $this->getReport()->endGroup();
-            }
             if($warning){
                 $this->getReport()->addWarning($message);
             } else {
+                foreach($this->getReport()->getGroupIdStack() as $group){
+                    $this->getReport()->endGroup();
+                }
                 $this->getReport()->addError($message);
             }
         }
@@ -221,7 +221,7 @@ class BaseReporting extends Component
                     }
                     ReportHelper::email($this->getReport(), $this->emailFullReport, $this->recipients);
                 } else {
-                    Yii::$app->queue->delay(60)->push(new SendReportEmail([
+                    Yii::$app->queue->delay(30)->push(new SendReportEmail([
                         'path' => $this->getPath(),
                         'emailFullReport' => $this->emailFullReport,
                         'recipients' => $this->recipients
