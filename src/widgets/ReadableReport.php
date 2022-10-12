@@ -19,20 +19,13 @@ class ReadableReport extends Widget
     public $report;
 
     /**
-     * Whether to show the full report or only the summary
-     * @var boolean
-     */
-    public $showFullReport;
-
-    /**
      * {@inheritdoc}
      */
     public function run()
     {
         return $this->render('readable-report', [
             'report' => $this->report,
-            'showFullReport' => $this->showFullReport,
+            'showFullReport' => $this->report->emailFullReport
         ]);
     }
 }
-?>

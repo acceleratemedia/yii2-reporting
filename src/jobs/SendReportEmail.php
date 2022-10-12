@@ -15,25 +15,11 @@ class SendReportEmail extends \yii\base\BaseObject implements \yii\queue\JobInte
     public $path;
 
     /**
-     * @var int ID of the Customer that we want to check for duplicate cards on
-     */
-    public $emailFullReport;
-
-    /**
-     * @var array List of email recipients
-     */
-    public $recipients;
-
-    /**
      * Using the component for 
      * @return void
      */    
     public function execute($queue)
     {
-        ReportHelper::email(
-            ReportHelper::loadFromPath($this->path),
-            $this->emailFullReport,
-            $this->recipients
-        );
+        ReportHelper::email(ReportHelper::loadFromPath($this->path));
     }
 }

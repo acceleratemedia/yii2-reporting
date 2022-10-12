@@ -6,6 +6,8 @@ use bvb\reporting\models\Report;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Yii;
+use yii\base\InvalidArgumentException;
+use yii\helpers\Json;
 
 /**
  * ReportHelper contains constants and helper functions pertaining to Reports
@@ -20,7 +22,12 @@ class ReportHelper
 	static function toJson($report)
 	{
 		$reportData = [
+			'id' => $report->id,
 			'title' => $report->title,
+			'recipients' => $report->recipients,
+			'sendEmailOnlyOnError' => $report->sendEmailOnlyOnError,
+			'emailFullReport' => $report->emailFullReport,
+			'emailMethod' => $report->emailMethod,
 			'entryLevels' => $report->getEntryLevels(),
 			'entries' => [],
 			'groups' => [],
@@ -51,7 +58,7 @@ class ReportHelper
 	 */
 	static function loadFromPath($path)
 	{
-		return (new Report())->loadFromPath($path);
+		return (new Report(['active' => false]))->loadFromPath($path);
 	}
 
 	/**
@@ -79,26 +86,37 @@ class ReportHelper
 	 * title as well as other summarized items
 	 * @return array
 	 */
-	static function getOverview($path)
+	static function getOverview($path, $reportPath)
 	{
-		$reportData = json_decode(file_get_contents($path), true);
-		return [
-			'path' => $path,
-			'title' => $reportData['title'],
-			'warningEntries' => $reportData['entryLevels']['warning'],
-			'errorEntries' => $reportData['entryLevels']['error'],
-			'date' => basename($path, '.json')
-		];
+		try{
+			$reportData = Json::decode(file_get_contents($reportPath), true);
+			return [
+				'path' => $reportPath,
+				'shortPath' => str_replace(Yii::getAlias($path), '', $reportPath),
+				'title' => $reportData['title'],
+				'warningEntries' => $reportData['entryLevels']['warning'],
+				'errorEntries' => $reportData['entryLevels']['error'],
+				'date' => basename($reportPath, '.json')
+			];
+		} catch (InvalidArgumentException $e){
+			return [
+				'path' => $reportPath,
+				'shortPath' => str_replace(Yii::getAlias($path), '', $reportPath),
+				'title' => 'Malformed Report File: '.basename($reportPath, '.json'),
+				'warningEntries' => 0,
+				'errorEntries' => 0,
+				'date' => basename($reportPath, '.json')
+			];
+		}
+
 	}
 
 	/**
 	 * Sends the report contents in an email
 	 * @param \bvb\reporting\models\Report $report
-	 * @param boolean $emailFullReport
-	 * @param array $recipients
 	 * @return boolean
 	 */
-	static function email($report, $emailFullReport, $recipients)
+	static function email($report)
 	{
 		$mailerDefaultHtmlLayout = Yii::$app->mailer->htmlLayout;
         Yii::$app->mailer->htmlLayout = '@bvb/reporting/mail/layouts/html';
@@ -110,10 +128,8 @@ class ReportHelper
 
         $return = Yii::$app->mailer->compose('@bvb/reporting/views/view/index', [
                 'report' => $report,
-                'showFullReport' => $emailFullReport
-            ])
-            ->setFrom(Yii::$app->params['fromEmail'])
-            ->setTo($recipients)
+            ])->setFrom(Yii::$app->params['fromEmail'])
+            ->setTo($report->recipients)
             ->setSubject($subject)
             ->send();
         Yii::$app->mailer->htmlLayout = $mailerDefaultHtmlLayout;
