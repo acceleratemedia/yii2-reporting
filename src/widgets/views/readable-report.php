@@ -40,14 +40,15 @@ use bvb\reporting\helpers\ReportHelper;
 		$groupIdStack = [];
 		$previousGroupId = null;
 		foreach($report->getEntries() as $entry):
+			$groupIdsRemoved = [];
 			$startNewGroup = $endLastGroup = false;
 			if(
 				!empty($entry->groupId) &&
 				$entry->groupId != $previousGroupId
 			){
 				$startNewGroup = true;
+				$groupIdStack[] = $entry->groupId;
 			}
-
 			if(
 				empty($entry->groupId) && !empty($previousGroupId) ||
 				(
@@ -55,10 +56,29 @@ use bvb\reporting\helpers\ReportHelper;
 					isset($groups[$entry->groupId]) && $groups[$entry->groupId]->parentId != $previousGroupId
 				)
 			){
+				// --- It's possible for more than one group to end at a time so
+				// --- we need to get the total number removed to properly render
+				// --- closing tags for the groups
+				$numCurrentGroups = count($groupIdStack);
+				for($i=$numCurrentGroups-1; $i>=0; $i--){
+					if($groupIdStack[$i] == $entry->groupId){
+						continue;
+					}
+					if(
+						!empty($entry->groupId) &&
+						$groupIdStack[$i] == $groups[$entry->groupId]->parentId
+					){
+						break;
+					}
+
+					$groupIdsRemoved[] = $groupIdStack[$i];
+					unset($groupIdStack[$i]);
+				}
+				$groupIdStack = array_values($groupIdStack);
 				$endLastGroup = true;
 			}
 		?>
-			<?= ($endLastGroup) ? '</ul>' : ''; ?>
+			<?= !empty($groupIdsRemoved) ? str_repeat('</ul>', count($groupIdsRemoved)) : ''; ?>
 			<?= ($startNewGroup) ? '<ul class="group">' : ''; ?>
 			<li class="report-entry report-entry-<?= $entry->level; ?>">
 				<?= $entry->message; ?>
