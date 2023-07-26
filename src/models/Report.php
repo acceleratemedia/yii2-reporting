@@ -132,7 +132,14 @@ class Report extends \yii\base\BaseObject
         if($this->active){        
             set_exception_handler([$this, 'handleException']);
             set_error_handler([$this, 'handleError']);
-            register_shutdown_function([$this, 'shutdownFunction']);
+            Yii::$app->on(
+                \yii\base\Application::EVENT_AFTER_REQUEST,
+                [$this, 'handleAfterRequest'],
+                null,
+                // --- Inserts @ beginning of handlers list since it uses the
+                // --- queue and sync queue runs during the same event
+                false 
+            );
         }
     }
 
@@ -545,7 +552,7 @@ class Report extends \yii\base\BaseObject
      * to do it using the queue component (queue component must be configured separately)
      * @return void
      */
-    public function shutdownFunction()
+    public function handleAfterRequest()
     {
         $this->saveAsFile();
         if(
@@ -559,7 +566,7 @@ class Report extends \yii\base\BaseObject
                 $this->emailMethod == self::EMAIL_ON_SHUTDOWN ||
                 !Yii::$app->has('queue')
             ){
-                if(!Yii::$app->has('queue')){
+                if(!$this->emailMethod != self::EMAIL_ON_SHUTDOWN){
                     $this->addError('Report set to email on queue but no queue component is configured');
                 }
                 ReportHelper::email($this);
