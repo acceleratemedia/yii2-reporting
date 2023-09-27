@@ -5,6 +5,7 @@ namespace bvb\reporting\components;
 use bvb\reporting\models\Report;
 use Yii;
 use yii\base\InvalidConfigException;
+use yii\base\InvalidArgumentException;
 use yii\base\UnknownMethodException;
 
 /**
@@ -94,15 +95,11 @@ class BaseReporting extends \yii\base\Component
     {
         // --- If there is an ID provided for the report, check to see if it
         // --- already exists
-        if(isset($reportConfig['id'])){
-            try{
-                if($this->getReport($id)){
-                    throw new InvalidConfigException('Trying to start a report with id `'.$reportConfig['id'].'` when one already exists is not allowed');
-                }
-            } catch(ServerErrorHttpException $e) {
-                // --- We want it to throw an error here because we don't want
-                // --- this report to exist yet, so just let this go
-            }
+        if(
+            isset($reportConfig['id']) &&
+            $this->hasReport($reportConfig['id'])
+        ){
+            throw new InvalidConfigException('A report with id `'.$reportConfig['id'].'` already exists.');
         } 
 
         $defaults = [];
@@ -123,21 +120,31 @@ class BaseReporting extends \yii\base\Component
     }
 
     /**
+     * Checks whether a report exists. If an ID is supplied, it checks for that
+     * report, otherwise it checks for the existence of any reports.
+     * @param mixed $id The ID of the report we are checking for
+     * @return boolean
+     */
+    public function hasReport($id = null)
+    {
+        if($id){
+            for($i=0; $i<count($this->_reports); $i++){
+                if($id === $this->_reports[$i]->id){
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return !empty($this->_reports);
+        }
+    }
+
+    /**
      * Returns the given report
      * @return \bvb\reporting\Report
      */
     public function getReport($id = null)
     {
-        if(empty($this->_reports)){
-            $config = [
-                'title' => 'Anonymous Report'
-            ];
-            if($id){
-                $config['id'] = $id;
-            }
-            $this->startReport($config);
-        }
-
         if(count($this->_reports) === 1){
             return $this->_reports[0];
         }
@@ -152,6 +159,6 @@ class BaseReporting extends \yii\base\Component
             }
         }
 
-        throw new ServerErrorHttpException("Report with ID '".$id."' not found");
+        throw new InvalidArgumentException("Report with ID '".$id."' not found");
     }
 }
