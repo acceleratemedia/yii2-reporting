@@ -27,7 +27,7 @@ class ManageController extends \yii\web\Controller
 
         $reportOverviews = [];
         foreach($reportFilePaths as $reportFilePath){
-            $reportOverviews[] = ReportHelper::getOverview($reportFilePath);
+            $reportOverviews[] = ReportHelper::getOverview($reportFilePath, $reportFilePath);
         }
 
         return $this->render('index', [
